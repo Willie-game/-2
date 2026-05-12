@@ -1,0 +1,165 @@
+<title>貪吃蛇遊戲</title>
+貪吃蛇遊戲
+開始遊戲 暫停遊戲
+得分：0
+
+難度：
+歷史積分: 0
+
+<script src="game.js"></script> body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+.container {
+text-align: center;
+}
+
+#gameCanvas {
+border: 2px solid #000;
+margin-bottom: 20px;
+}
+
+button {
+padding: 10px 20px;
+font-size: 16px;
+margin: 10px;
+}
+
+#difficulty {
+width: 200px;
+}
+
+#controls {
+margin-top: 20px;
+}
+let canvas = document.getElementById("gameCanvas");
+let ctx = canvas.getContext("2d");
+
+let score = 0;
+let highScore = localStorage.getItem("highScore") || 0;
+let snake = [{ x: 200, y: 200 }];
+let food = { x: 0, y: 0 };
+let direction = "RIGHT";
+let gameInterval;
+let gameSpeed = 100; // 默認速度
+let isGameRunning = false;
+
+document.getElementById("startButton").addEventListener("click", startGame);
+document.getElementById("pauseButton").addEventListener("click", togglePause);
+document.getElementById("difficulty").addEventListener("input", changeDifficulty);
+
+function startGame() {
+score = 0;
+snake = [{ x: 200, y: 200 }];
+direction = "RIGHT";
+isGameRunning = true;
+document.getElementById("pauseButton").disabled = false;
+document.getElementById("startButton").disabled = true;
+generateFood();
+gameInterval = setInterval(gameLoop, gameSpeed);
+}
+
+function togglePause() {
+if (isGameRunning) {
+clearInterval(gameInterval);
+document.getElementById("pauseButton").innerText = "繼續遊戲";
+} else {
+gameInterval = setInterval(gameLoop, gameSpeed);
+document.getElementById("pauseButton").innerText = "暫停遊戲";
+}
+isGameRunning = !isGameRunning;
+}
+
+function changeDifficulty(event) {
+gameSpeed = 200 - event.target.value * 20; // 难度范围
+if (isGameRunning) {
+clearInterval(gameInterval);
+gameInterval = setInterval(gameLoop, gameSpeed);
+}
+}
+
+function gameLoop() {
+moveSnake();
+if (checkCollision()) {
+endGame();
+}
+if (checkFoodCollision()) {
+score++;
+if (score > highScore) {
+highScore = score;
+localStorage.setItem("highScore", highScore);
+}
+document.getElementById("score").innerText = score;
+document.getElementById("highScore").innerText = highScore;
+generateFood();
+}
+clearCanvas();
+drawSnake();
+drawFood();
+}
+
+function clearCanvas() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawSnake() {
+snake.forEach(segment => {
+ctx.fillStyle = "#00FF00";
+ctx.fillRect(segment.x, segment.y, 20, 20);
+});
+}
+
+function drawFood() {
+ctx.fillStyle = "#FF0000";
+ctx.fillRect(food.x, food.y, 20, 20);
+}
+
+function moveSnake() {
+let head = { ...snake[0] };
+if (direction === "RIGHT") head.x += 20;
+if (direction === "LEFT") head.x -= 20;
+if (direction === "UP") head.y -= 20;
+if (direction === "DOWN") head.y += 20;
+snake.unshift(head);
+snake.pop();
+}
+
+function generateFood() {
+food.x = Math.floor(Math.random() * 20) * 20;
+food.y = Math.floor(Math.random() * 20) * 20;
+}
+
+function checkCollision() {
+let head = snake[0];
+// 檢查是否撞到墙壁
+if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) return true;
+// 檢查是否撞到自己
+for (let i = 1; i < snake.length; i++) {
+if (head.x === snake[i].x && head.y === snake[i].y) return true;
+}
+return false;
+}
+
+function checkFoodCollision() {
+let head = snake[0];
+return head.x === food.x && head.y === food.y;
+}
+
+function endGame() {
+clearInterval(gameInterval);
+alert(遊戲结束！您的得分為：${score});
+if (score > highScore) {
+highScore = score;
+localStorage.setItem("highScore", highScore);
+}
+document.getElementById("highScore").innerText = highScore;
+document.getElementById("score").innerText = score;
+document.getElementById("startButton").disabled = false;
+document.getElementById("pauseButton").disabled = true;
+document.getElementById("pauseButton").innerText = "暫停遊戲";
+isGameRunning = false;
+}
+
+document.addEventListener("keydown", function (event) {
+if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+});
